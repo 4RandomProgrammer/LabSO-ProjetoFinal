@@ -26,9 +26,9 @@
 #include "disk.h"
 #include "fs.h"
 
-#define CLUSTERSIZE 4096
-#define FATCLUSTERS 65536
-#define DIRENTRIES 128
+#define CLUSTERSIZE 4096	// Tamanho de um cluster da FAT em bytes
+#define FATCLUSTERS 65536	// Tamanho total da FAT em short (bytes/2)
+#define DIRENTRIES 128	// Quantidade de arquivos no diretório
 
 unsigned short fat[FATCLUSTERS];
 
@@ -41,20 +41,43 @@ typedef struct {
 
 dir_entry dir[DIRENTRIES];
 
-
+/* Inicia o sistema de arquivos e suas estruturas internas. Esta função é automaticamente chamada pelo interpretador de comandos no
+início do sistema. Esta função deve carregar dados do disco para restaurar um sistema já em uso e é um bom momento para verificar se o disco
+está formatado.*/
 int fs_init() {
-  	//printf("Função não implementada: fs_init\n");
-	
+	int fat_count = 2*FATCLUSTERS/CLUSTERSIZE;	// Multiplica por 2 pq a FATCLUSTERS está em short (bytes/2)
 
+  	// Carregar a FAT
+	char* buffer = (char *) fat;
+	for (int i = 0 ; i < fat_count; i++) {	// Puxa os primeiros fat_count setores, lendo a FAT guardada no disco
+		bl_read(i, buffer[i*SECTORSIZE]);
+  	}
+
+	// Carregar o diretório
+	buffer = (char*)dir;
+	bl_read(fat_count+1, buffer);
+
+	// Checar se ta formatado
+	for (int i = 0; i < DIRENTRIES; i++) {	// Checar se os arquivos estão certinhos
+    	if (dir[i].used == 0)
+			continue;
+			
+		// Procurando o fim, se eu encontrar UM arquivo desocupado eu fico NUCLEAR
+		short index = fat[dir[i].first_block];
+		while (index != 2) {
+			if (fat[index] == 1)
+				return 0;
+			
+			index = fat[index];
+		}
+  	}
 
   	return 1;
 }
 
+/* Inicia o dispositivo de disco para uso, iniciando e escrevendo as estruturas de dados necessárias */
 int fs_format() {
-	printf("Função não implementada: fs_format\n");
-
-
-  
+	
 	return 0;
 }
 
@@ -125,6 +148,10 @@ int fs_remove(char *file_name) {
   	printf("Função não implementada: fs_remove\n");
   	return 0;
 }
+
+
+
+// --------- PARTE 2 ----------------------
 
 int fs_open(char *file_name, int mode) {
   	printf("Função não implementada: fs_open\n");
