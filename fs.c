@@ -49,8 +49,8 @@ int fs_init() {
 
   	// Carregar a FAT
 	char* buffer = (char *) fat;
-	for (int i = 0 ; i < fat_count; i++) {	// Puxa os primeiros fat_count setores, lendo a FAT guardada no disco
-		bl_read(i, buffer[i*SECTORSIZE]);
+	for (int i = 0; i < fat_count; i++) {	// Puxa os primeiros fat_count setores, lendo a FAT guardada no disco
+		bl_read(i, &buffer[i*SECTORSIZE]);
   	}
 
 	// Carregar o diretório
