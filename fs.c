@@ -40,6 +40,7 @@ typedef struct {
 } dir_entry;
 
 dir_entry dir[DIRENTRIES];
+int formatado = 0;
 
 /* Inicia o sistema de arquivos e suas estruturas internas. Esta função é automaticamente chamada pelo interpretador de comandos no
 início do sistema. Esta função deve carregar dados do disco para restaurar um sistema já em uso e é um bom momento para verificar se o disco
@@ -51,6 +52,7 @@ int fs_init() {
 	char* buffer = (char *) fat;
 	for (int i = 0; i < fat_count; i++) {	// Puxa os primeiros fat_count setores, lendo a FAT guardada no disco
 		bl_read(i, &buffer[i*SECTORSIZE]);
+		printf("%d: %d \n", i, fat[i]);
   	}
 
 	// Carregar o diretório
@@ -58,20 +60,19 @@ int fs_init() {
 	bl_read(fat_count+1, buffer);
 
 	// Checar se ta formatado
-	for (int i = 0; i < DIRENTRIES; i++) {	// Checar se os arquivos estão certinhos
-    	if (dir[i].used == 0)
-			continue;
-			
-		// Procurando o fim, se eu encontrar UM arquivo desocupado eu fico NUCLEAR
-		short index = fat[dir[i].first_block];
-		while (index != 2) {
-			if (fat[index] == 1)
-				return 0;
-			
-			index = fat[index];
-		}
+	for (int i = 0; i < fat_count; i++) {	// Checar se os arquivos estão certinhos
+	        printf("%d: %d \n", i, fat[i]);
+	        if (fat[i] != 3) {
+    	              printf("Este disco não está formatado ainda =(\n");
+    	              return 1;
+    	        }
   	}
-
+  	if (fat[fat_count] != 4) {
+  	        printf("Este disco não está formatado ainda =(\n");
+  	        return 1;
+  	}
+  	
+        formatado = 1;
   	return 1;
 }
 
