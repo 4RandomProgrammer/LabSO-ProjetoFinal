@@ -144,9 +144,59 @@ int fs_create(char* file_name) {
   	return 0;
 }
 
+//Preciso ver tudo
 int fs_remove(char *file_name) {
-  	printf("Função não implementada: fs_remove\n");
-  	return 0;
+
+	//Check de formatado.
+		
+	//if(!formatado) return 0;
+
+	//Pegar os nome dos arquivos da fat; - onde estão o nome dos arquivos?
+	//Ir comparando nome a nome e remover
+	//Como remover? Setar tudo para 0?
+	//Ao remover enviar os agrupamentos livres
+	//como que com a posição na fat eu chego nos arquivos?
+
+	int removed = 0;
+	int i = 0;
+
+	while(i < DIRENTRIES){
+		
+		//Remover
+		if(strcmp(file_name,dir[i].name) == 0){
+
+			//Setando removed para 1 já que ele foi removido
+			removed = 1;
+
+			//Como remover
+			dir[i].used = 0;
+
+			//Criar um buffer de 1s com o para ser escrito no disco
+			int pos = dir[i].first_block;
+			int nextPos = fat[pos];
+
+			//Removido da fat
+			while(pos != 2){
+
+				fat[pos] = 1;
+				pos = nextPos;
+				nextPos = fat[pos];
+			}
+			
+			//Remover o diretório do disco e da fat
+			char *buffer = (char *) dir;
+			bl_write(2*FATCLUSTERS/CLUSTERSIZE,buffer);
+
+			break;
+		}
+		//Precisa ir até o final devido a fat ser esparsa. E se fossemos compactar a fat, deveriamos compactar o disco e isso é uma operação mt custosa.
+		i++;
+
+	}
+
+	if(!removed) printf("Não há arquivos para se remover");
+
+	return removed;
 }
 
 
