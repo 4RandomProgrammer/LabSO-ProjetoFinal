@@ -134,6 +134,7 @@ int fs_init() {
 	buffer = (char*)dir;
 	bl_read(fat_count, buffer);
 
+
 	// Checar se ta formatado
 	for (int i = 0; i < fat_count; i++) {	// Checar se os arquivos estão certinhos
 	        if (fat[i] != 3) {
