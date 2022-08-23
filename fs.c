@@ -51,7 +51,7 @@ typedef struct {
 } dir_entry;
 
 dir_entry dir[DIRENTRIES];
- int formatado = 0;
+int formatado = 0;
 
 
 /*FUNÇÕES AUXILIARES*/
@@ -102,9 +102,16 @@ int write_fat(){
 
 int write_dir(){
 	char* buffer = (char *) dir;
-
-	return bl_write(32, buffer);
+	int fat_count = 2*FATCLUSTERS/CLUSTERSIZE;
+	return bl_write(fat_count, buffer);
 	
+}
+
+
+void print_dir() {
+	for (int i = 0; i < DIRENTRIES; i++){
+    	printf("%d: %d %d %d\n", i, dir[i].first_block, dir[i].used, dir[i].size);
+	}
 }
 
 
@@ -121,25 +128,26 @@ int fs_init() {
 	char* buffer = (char *) fat;
 	for (int i = 0; i < fat_count; i++) {	// Puxa os primeiros fat_count setores, lendo a FAT guardada no disco
 		bl_read(i, &buffer[i*SECTORSIZE]);
-		//printf("%d: %d \n", i, fat[i]);
+		printf("%d: %d \n", i, fat[i]);
   	}
 
 	// Carregar o diretório
 	buffer = (char*)dir;
-	bl_read(fat_count+1, buffer);
+	bl_read(fat_count, buffer);
+	print_dir();
 
 	// Checar se ta formatado
 	for (int i = 0; i < fat_count; i++) {	// Checar se os arquivos estão certinhos
 	        //printf("%d: %d \n", i, fat[i]);
 	        if (fat[i] != 3) {
-    	              printf("Este disco não está formatado ainda =(\n");
-    	              return 1;
-    	        }
+    	        printf("Este disco não está formatado ainda =(\n");
+    	        return 1;
+    	    }
   	}
 
   	if (fat[fat_count] != 4) {
-  	        printf("Este disco não está formatado ainda =(\n");
-  	        return 1;
+  	    printf("Este disco não está formatado ainda =(\n");
+  	    return 1;
   	}
   	
     formatado = 1;
@@ -212,6 +220,7 @@ int fs_list(char *buffer, int size) {
       		//printf("%s\n", dir[i].name);
     	} 
   	}
+
 	//printf("%s", buffer);
 	return 1;
 }
@@ -219,7 +228,6 @@ int fs_list(char *buffer, int size) {
 //Cria um novo arquivo com nome file_name e tamanho 0. 
 //Um erro deve ser gerado se o arquivo já existe.
 int fs_create(char* file_name) {
-  	
 	//checagem de nome
 	for(int i = 0; i < DIRENTRIES; i++){
 		if(dir[i].used){
@@ -236,13 +244,9 @@ int fs_create(char* file_name) {
   	strcpy(new.name, file_name);
   	new.first_block = find_first_empty_fat_index(0);
   	new.size = 0; 
-
   	dir[find_first_empty_dir()] = new;
 
-
 	fat[new.first_block] = 2;
-
-	write_fat();
 
 	if(write_fat() && write_dir()){
 		return 1;
