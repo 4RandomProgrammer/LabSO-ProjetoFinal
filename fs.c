@@ -128,13 +128,13 @@ int fs_init() {
 	char* buffer = (char *) fat;
 	for (int i = 0; i < fat_count; i++) {	// Puxa os primeiros fat_count setores, lendo a FAT guardada no disco
 		bl_read(i, &buffer[i*SECTORSIZE]);
-		printf("%d: %d \n", i, fat[i]);
+		//printf("%d: %d \n", i, fat[i]);
   	}
 
 	// Carregar o diretório
 	buffer = (char*)dir;
 	bl_read(fat_count, buffer);
-	print_dir();
+	//print_dir();
 
 	// Checar se ta formatado
 	for (int i = 0; i < fat_count; i++) {	// Checar se os arquivos estão certinhos
