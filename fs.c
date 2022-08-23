@@ -259,6 +259,11 @@ int fs_remove(char *file_name) {
 	//Como remover? Setar tudo para 0?
 	//Ao remover enviar os agrupamentos livres
 	//como que com a posição na fat eu chego nos arquivos?
+	
+	if(!formatado){
+		printf("Disco não formatado, formata isso primeiro");
+		return 0;
+	}
 
 	int removed = 0;
 	int i = 0;
@@ -266,7 +271,7 @@ int fs_remove(char *file_name) {
 	while(i < DIRENTRIES){
 		
 		//Remover
-		if(strcmp(file_name,dir[i].name) == 0){
+		if(strcmp(file_name,dir[i].name) == 0 && dir[i].used){
 
 			//Setando removed para 1 já que ele foi removido
 			removed = 1;
