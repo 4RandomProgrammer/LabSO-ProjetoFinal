@@ -182,7 +182,10 @@ int fs_format() {
 //Retorna o espaço livre no dispositivo em bytes
 //TODO: conferir se está certo
 int fs_free() {
-	int max_size = bl_size() * SECTORSIZE;
+
+	//33 = 32 setores da FAT + 1 setor do Dir
+	//Como não podem ser usados para escrever arquivos, subtraímos 
+	int max_size = (bl_size() - 33) * SECTORSIZE ;
 
 	for (int i = 0 ; i < DIRENTRIES ; i++) {
 
