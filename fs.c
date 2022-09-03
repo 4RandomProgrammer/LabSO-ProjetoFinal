@@ -242,7 +242,6 @@ int fs_create(char* file_name) {
 
 	fat[new.first_block] = 2;
 
-	write_fat();
 
 	if(write_fat() && write_dir()){
 		return 1;
