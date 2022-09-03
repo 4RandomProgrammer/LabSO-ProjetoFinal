@@ -129,7 +129,7 @@ int fs_init() {
 	bl_read(fat_count+1, buffer);
 
 	// Checar se ta formatado
-	for (int i = 0; i < fat_count; i++) {	// Checar se os arquivos estão certinhos
+	for (int i = 0; i < fat_ count; i++) {	// Checar se os arquivos estão certinhos
 	        //printf("%d: %d \n", i, fat[i]);
 	        if (fat[i] != 3) {
     	              printf("Este disco não está formatado ainda =(\n");
@@ -233,7 +233,9 @@ int fs_create(char* file_name) {
 			}
 		}
 	}
+	
 
+	//Criando nova entrada no dir
   	dir_entry new;
   	new.used = 1;
   	strcpy(new.name, file_name);
@@ -242,7 +244,7 @@ int fs_create(char* file_name) {
 
   	dir[find_first_empty_dir()] = new;
 
-
+	//Setando o índice como 2 (Último agrupamento de arquivo)
 	fat[new.first_block] = 2;
 
 
@@ -293,9 +295,9 @@ int fs_remove(char *file_name) {
 				nextPos = fat[pos];
 			}
 			
-			//Remover o diretório do disco e da fat
-			char *buffer = (char *) dir;
-			bl_write(2*FATCLUSTERS/CLUSTERSIZE,buffer);
+			write_dir();
+			write_fat();
+
 
 			break;
 		}
