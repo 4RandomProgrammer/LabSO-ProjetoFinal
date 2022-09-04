@@ -136,13 +136,15 @@ int fs_init() {
 
 
 	// Checar se ta formatado
-	for (int i = 0; i < fat_count; i++) {	// Checar se os arquivos estão certinhos
+	for (int i = 0; i < fat_count; i++) {	
+		// Checar se os arquivos estão com índices corretos
 	        if (fat[i] != 3) {
     	        printf("Erro: o disco não está pronto para uso. É necessário formatá-lo.\n");
     	        return 1;
     	    }
   	}
 
+	//Checando índice do diretório
   	if (fat[fat_count] != 4) {
   	    printf("Erro: o disco não está pronto para uso. É necessário formatá-lo.\n");
   	    return 1;
@@ -157,6 +159,7 @@ escrevendo as estruturas de dados necessárias */
 //Basicamente remove todas as entradas no diretório e reseta a FAT
 int fs_format() {
 
+	//Limpando todo o vetor de Dir
 	for (int i = 0; i < DIRENTRIES; i++){
     	//strcpy(dir[i].name, NULL);
 		dir[i].first_block = 0;
@@ -169,8 +172,10 @@ int fs_format() {
     	fat[i] = 3;
 	}
 
+	//índice do diretório
 	fat[32] = 4;
 
+	//índices mostrando que o setor está livre 
 	for (int i = 33; i < FATCLUSTERS; i++){
     	fat[i] = 1;
 	}
@@ -194,6 +199,7 @@ int fs_free() {
 	//Como não podem ser usados para escrever arquivos, subtraímos 
 	int max_size = (bl_size() - 33) * SECTORSIZE ;
 
+	//Somando o valor em bytes de todos os arquivos do sistema e subtraindo do total máximo
 	for (int i = 0 ; i < DIRENTRIES ; i++) {
 
 		if(dir[i].used){
@@ -210,7 +216,8 @@ int fs_free() {
 int fs_list(char *buffer, int size) {
 	//printf("Função não implementada: fs_list\n");
 	//buffer = NULL;
-
+	
+	//Operação apenas possível em disco formatado
 	if(!formatado){
 		printf("Erro: o disco não está pronto para uso. É necessário formatá-lo.\n");
 		return 0;
@@ -219,6 +226,7 @@ int fs_list(char *buffer, int size) {
 	buffer[0]='\0';
 	char temp_buffer[150];
 	
+	//Escrevendo as informações da listagem no buffer
   	for (int i = 0 ; i < DIRENTRIES ; i++) {
     
     	if(dir[i].used == 1) 
@@ -237,6 +245,7 @@ int fs_list(char *buffer, int size) {
 //Um erro deve ser gerado se o arquivo já existe.
 int fs_create(char* file_name) {
 	
+	//Operação apenas possível em disco formatado
 	if(!formatado){
 		printf("Erro: o disco não está pronto para uso. É necessário formatá-lo.\n");
 		return 0;
@@ -250,7 +259,7 @@ int fs_create(char* file_name) {
 	}
 	
 	
-	//checagem de nome
+	//checagem de nome repetido
 	
 	for(int i = 0; i < DIRENTRIES; i++){
 		if(dir[i].used){
@@ -263,15 +272,15 @@ int fs_create(char* file_name) {
 		}
 	}
 
-
+	//Nova entrada no dir
   	dir_entry new;
   	new.used = 1;
   	strcpy(new.name, file_name);
   	new.first_block = find_first_empty_fat_index(0);
   	new.size = 0; 
 
+	//Checagem se é possível adicionar mais arquivos 
 	int new_dir_index = find_first_empty_dir();
-	
 	if(new_dir_index == -1)
 	{
 		printf("Erro: Não é possível criar mais arquivos\n");
@@ -292,7 +301,7 @@ int fs_create(char* file_name) {
 
 int fs_remove(char *file_name) {
 
-
+	
 	if(!formatado){
 		printf("Erro: o disco não está pronto para uso. É necessário formatá-lo.\n");
 		return 0;
