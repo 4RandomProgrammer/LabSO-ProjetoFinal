@@ -281,31 +281,36 @@ int fs_create(char* file_name) {
 
 int fs_remove(char *file_name) {
 
-	//Pegar os nome dos arquivos da fat; - onde estão o nome dos arquivos?
+	//Pegar os nome dos arquivos da fat; - onde estão o nome dos arquivos? dir[i].name
 	//Ir comparando nome a nome e remover
 	//Como remover? Setar tudo para 0?
 	//Ao remover enviar os agrupamentos livres
 	//como que com a posição na fat eu chego nos arquivos?
+	
+	if(!formatado){
+		printf("Disco não formatado, formata isso primeiro");
+		return 0;
+	}
 
 	int removed = 0;
 	int i = 0;
 
 	while(i < DIRENTRIES){
 		
-		//Remover
-		if(strcmp(file_name,dir[i].name) == 0){
+		//procurando o arquivo
+		if(strcmp(file_name,dir[i].name) == 0 && dir[i].used){
 
-			//Setando removed para 1 já que ele foi removido
+			//Setando removed para mostrar que houve um arquivo removido
 			removed = 1;
 
-			//Como remover
+			//Arquivo não é mais utilizado
 			dir[i].used = 0;
 
-			//Criar um buffer de 1s com o para ser escrito no disco
+			//Pegando o primeiro bloco indexado
 			int pos = dir[i].first_block;
 			int nextPos = fat[pos];
 
-			//Removido da fat
+			//Removendo o arquivo da fat
 			while(pos != 2){
 
 				fat[pos] = 1;
@@ -313,12 +318,8 @@ int fs_remove(char *file_name) {
 				nextPos = fat[pos];
 			}
 			
-			//Remover o diretório do disco e da fat
-			//char *buffer = (char *) dir;
-			//bl_write(2*FATCLUSTERS/CLUSTERSIZE,buffer);
-
+			write_dir();
 			write_fat();
-			write_dir();			
 
 
 			break;
@@ -328,7 +329,7 @@ int fs_remove(char *file_name) {
 
 	}
 
-	if(!removed) printf("Erro: o arquivo passado como parâmetro não pode ser removido.\n");
+	if(!removed) printf("Não há arquivos para se remover");
 
 	return removed;
 }
