@@ -210,6 +210,12 @@ int fs_free() {
 int fs_list(char *buffer, int size) {
 	//printf("Função não implementada: fs_list\n");
 	//buffer = NULL;
+
+	if(!formatado){
+		printf("Erro: o disco não está pronto para uso. É necessário formatá-lo.\n");
+		return 0;
+	}
+
 	buffer[0]='\0';
 	char temp_buffer[150];
 	
