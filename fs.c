@@ -138,13 +138,13 @@ int fs_init() {
 	// Checar se ta formatado
 	for (int i = 0; i < fat_count; i++) {	// Checar se os arquivos estão certinhos
 	        if (fat[i] != 3) {
-    	        printf("Este disco não está formatado ainda =(\n");
+    	        printf("Erro: o disco não está pronto para uso. É necessário formatá-lo.\n");
     	        return 1;
     	    }
   	}
 
   	if (fat[fat_count] != 4) {
-  	    printf("Este disco não está formatado ainda =(\n");
+  	    printf("Erro: o disco não está pronto para uso. É necessário formatá-lo.\n");
   	    return 1;
   	}
   	
@@ -251,7 +251,7 @@ int fs_create(char* file_name) {
 	
 	if(new_dir_index == -1)
 	{
-		printf("Não é possível criar mais arquivos\n");
+		printf("Erro: Não é possível criar mais arquivos\n");
 		return 0;
 	}
 
@@ -316,7 +316,7 @@ int fs_remove(char *file_name) {
 
 	}
 
-	if(!removed) printf("Não há arquivos para se remover");
+	if(!removed) printf(("Erro: o arquivo passado como parâmetro não pode ser removido.\n");
 
 	return removed;
 }
