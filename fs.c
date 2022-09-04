@@ -108,12 +108,12 @@ int write_dir(){
 }
 
 
-void print_dir() {
-	for (int i = 0; i < DIRENTRIES; i++){
-    	printf("%d: %d %d %d\n", i, dir[i].first_block, dir[i].used, dir[i].size);
-	}
-}
-
+//void print_dir() {
+//	for (int i = 0; i < DIRENTRIES; i++){
+//    	printf("%d: %d %d %d\n", i, dir[i].first_block, dir[i].used, dir[i].size);
+//	}
+//}
+//
 
 int create_file(char* file_name) {
 	//checagem de nome
@@ -168,13 +168,13 @@ int fs_init() {
 	// Checar se ta formatado
 	for (int i = 0; i < fat_count; i++) {	// Checar se os arquivos estão certinhos
 	        if (fat[i] != 3) {
-    	        printf("Este disco não está formatado ainda =(\n");
+    	        printf("Erro: o disco não está pronto para uso. É necessário formatá-lo.\n");
     	        return 1;
     	    }
   	}
 
   	if (fat[fat_count] != 4) {
-  	    printf("Este disco não está formatado ainda =(\n");
+  	    printf("Erro: o disco não está pronto para uso. É necessário formatá-lo.\n");
   	    return 1;
   	}
   	
@@ -206,6 +206,7 @@ int fs_format() {
 	}
 	
 	if(write_dir() && write_fat()){
+		formatado=1;
 		return 1;
 	}else{
 		return 0;
@@ -218,7 +219,10 @@ int fs_format() {
 //Retorna o espaço livre no dispositivo em bytes
 //TODO: conferir se está certo
 int fs_free() {
-	int max_size = bl_size() * SECTORSIZE;
+
+	//33 = 32 setores da FAT + 1 setor do Dir
+	//Como não podem ser usados para escrever arquivos, subtraímos 
+	int max_size = (bl_size() - 33) * SECTORSIZE ;
 
 	for (int i = 0 ; i < DIRENTRIES ; i++) {
 
@@ -256,10 +260,43 @@ int fs_list(char *buffer, int size) {
 //Cria um novo arquivo com nome file_name e tamanho 0. 
 //Um erro deve ser gerado se o arquivo já existe.
 int fs_create(char* file_name) {
-	if (create_file(file_name))
-	  return 1;
-	else
-	  return 0;
+	//checagem de nome
+	
+	for(int i = 0; i < DIRENTRIES; i++){
+		if(dir[i].used){
+		
+			if(!strcmp(dir[i].name, file_name)){
+				//nome de arquivo igual causa erro
+				printf("Erro: Já existe um arquivo com esse nome.\n");
+				return 0;
+			}
+		}
+	}
+
+
+  	dir_entry new;
+  	new.used = 1;
+  	strcpy(new.name, file_name);
+  	new.first_block = find_first_empty_fat_index(0);
+  	new.size = 0; 
+
+	int new_dir_index = find_first_empty_dir();
+	
+	if(new_dir_index == -1)
+	{
+		printf("Erro: Não é possível criar mais arquivos\n");
+		return 0;
+	}
+
+  	dir[new_dir_index] = new;
+
+	fat[new.first_block] = 2;
+
+	if(write_fat() && write_dir()){
+		return 1;
+	}else{
+		return 0;
+	}
 }
 
 
@@ -298,8 +335,12 @@ int fs_remove(char *file_name) {
 			}
 			
 			//Remover o diretório do disco e da fat
-			char *buffer = (char *) dir;
-			bl_write(2*FATCLUSTERS/CLUSTERSIZE,buffer);
+			//char *buffer = (char *) dir;
+			//bl_write(2*FATCLUSTERS/CLUSTERSIZE,buffer);
+
+			write_fat();
+			write_dir();			
+
 
 			break;
 		}
@@ -308,7 +349,7 @@ int fs_remove(char *file_name) {
 
 	}
 
-	if(!removed) printf("Não há arquivos para se remover");
+	if(!removed) printf("Erro: o arquivo passado como parâmetro não pode ser removido.\n");
 
 	return removed;
 }
