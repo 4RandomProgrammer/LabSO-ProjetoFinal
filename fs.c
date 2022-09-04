@@ -129,7 +129,7 @@ int fs_init() {
 	bl_read(fat_count+1, buffer);
 
 	// Checar se ta formatado
-	for (int i = 0; i < fat_ count; i++) {	// Checar se os arquivos estão certinhos
+	for (int i = 0; i < fat_count; i++) {	// Checar se os arquivos estão certinhos
 	        //printf("%d: %d \n", i, fat[i]);
 	        if (fat[i] != 3) {
     	              printf("Este disco não está formatado ainda =(\n");
