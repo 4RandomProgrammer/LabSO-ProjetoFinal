@@ -258,7 +258,7 @@ int fs_create(char* file_name) {
 
 int fs_remove(char *file_name) {
 
-	//Pegar os nome dos arquivos da fat; - onde estão o nome dos arquivos?
+	//Pegar os nome dos arquivos da fat; - onde estão o nome dos arquivos? dir[i].name
 	//Ir comparando nome a nome e remover
 	//Como remover? Setar tudo para 0?
 	//Ao remover enviar os agrupamentos livres
@@ -274,13 +274,13 @@ int fs_remove(char *file_name) {
 
 	while(i < DIRENTRIES){
 		
-		//Remover
+		//procurando o arquivo
 		if(strcmp(file_name,dir[i].name) == 0 && dir[i].used){
 
 			//Setando removed para mostrar que houve um arquivo removido
 			removed = 1;
 
-			//Como remover
+			//Arquivo não é mais utilizado
 			dir[i].used = 0;
 
 			//Pegando o primeiro bloco indexado
