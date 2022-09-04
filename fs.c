@@ -231,6 +231,11 @@ int fs_list(char *buffer, int size) {
 //Um erro deve ser gerado se o arquivo já existe.
 int fs_create(char* file_name) {
 	
+	if(!formatado){
+		printf("Erro: o disco não está pronto para uso. É necessário formatá-lo.\n");
+		return 0;
+	}
+
 	//Checando o tamanho do nome do arquivo
 	if(strlen(file_name) > 24)
 	{
