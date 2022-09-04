@@ -281,14 +281,9 @@ int fs_create(char* file_name) {
 
 int fs_remove(char *file_name) {
 
-	//Pegar os nome dos arquivos da fat; - onde estão o nome dos arquivos? dir[i].name
-	//Ir comparando nome a nome e remover
-	//Como remover? Setar tudo para 0?
-	//Ao remover enviar os agrupamentos livres
-	//como que com a posição na fat eu chego nos arquivos?
-	
+
 	if(!formatado){
-		printf("Disco não formatado, formata isso primeiro");
+		printf("Erro: o disco não está pronto para uso. É necessário formatá-lo.\n");
 		return 0;
 	}
 
@@ -329,7 +324,7 @@ int fs_remove(char *file_name) {
 
 	}
 
-	if(!removed) printf("Não há arquivos para se remover");
+	if(!removed) printf("Erro: o arquivo passado como parâmetro não pode ser removido.\n");
 
 	return removed;
 }
