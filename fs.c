@@ -230,6 +230,15 @@ int fs_list(char *buffer, int size) {
 //Cria um novo arquivo com nome file_name e tamanho 0. 
 //Um erro deve ser gerado se o arquivo já existe.
 int fs_create(char* file_name) {
+	
+	//Checando o tamanho do nome do arquivo
+	if(strlen(file_name) > 24)
+	{
+		printf("Erro: Nome do arquivo deve conter apenas 24 caracteres\n");
+		return 0;
+	}
+	
+	
 	//checagem de nome
 	
 	for(int i = 0; i < DIRENTRIES; i++){
