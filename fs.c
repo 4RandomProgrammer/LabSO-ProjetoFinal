@@ -277,17 +277,17 @@ int fs_remove(char *file_name) {
 		//Remover
 		if(strcmp(file_name,dir[i].name) == 0 && dir[i].used){
 
-			//Setando removed para 1 já que ele foi removido
+			//Setando removed para mostrar que houve um arquivo removido
 			removed = 1;
 
 			//Como remover
 			dir[i].used = 0;
 
-			//Criar um buffer de 1s com o para ser escrito no disco
+			//Pegando o primeiro bloco indexado
 			int pos = dir[i].first_block;
 			int nextPos = fat[pos];
 
-			//Removido da fat
+			//Removendo o arquivo da fat
 			while(pos != 2){
 
 				fat[pos] = 1;
