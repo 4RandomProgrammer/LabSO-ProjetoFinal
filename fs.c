@@ -316,7 +316,7 @@ int fs_remove(char *file_name) {
 
 	}
 
-	if(!removed) printf(("Erro: o arquivo passado como parâmetro não pode ser removido.\n");
+	if(!removed) printf("Erro: o arquivo passado como parâmetro não pode ser removido.\n");
 
 	return removed;
 }
