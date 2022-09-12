@@ -166,7 +166,7 @@ int create_file(char* file_name) {
 	if(write_fat() && write_dir()){
 		return new_dir_index;
 	}else{
-		return 0;
+		return -1;
 	}
 }
 
@@ -262,7 +262,7 @@ int fs_free() {
 			int actual_size = dir[i].size / SECTORSIZE; //divisao inteira do tamanho pelo setor
 			
 			//se a divisao nao for inteira ou o tamanho do arquivo for nulo, o arquivo ocupa um setor a mais.
-			if( (dir[i].size % SECTORSIZE) or actual_size == 0) actual_size++;
+			if( (dir[i].size % SECTORSIZE) || actual_size == 0) actual_size++;
 			
 			max_size = max_size - actual_size;
 		 
@@ -440,7 +440,7 @@ int fs_open(char *file_name, int mode) {
       		fs_remove(file_name);
     	}
     	file_index = create_file(file_name);
-    	if (file_index == 0)
+    	if (file_index == -1)
       		return -1;
 		file_status[file_index] = 'W';
   }
@@ -460,12 +460,14 @@ int fs_write(char *buffer, int size, int file) {
 
 	int iterations = (size / SECTORSIZE) + quebrado;
 
+	int w_block = dir[file].first_block;
+
 	for (int i = 0; i < iterations; i++) {
 
-		int w_block = find_first_empty_fat_index(0);
 
 		if(i+1 == iterations) fat[w_block] = 2;
 
+		w_block = find_first_empty_fat_index(0);
 
 
 

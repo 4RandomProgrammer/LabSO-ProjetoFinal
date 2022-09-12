@@ -2,3 +2,7 @@ rsfs
 
 *.pdf
 *.o
+fs.o
+arq*
+img*
+*.json
