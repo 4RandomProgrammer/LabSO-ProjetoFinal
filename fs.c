@@ -344,6 +344,7 @@ int fs_create(char* file_name) {
 	}
 
   	dir[new_dir_index] = new;
+	file_status[new_dir_index] = 'F';
 
 	fat[new.first_block] = 2;
 
