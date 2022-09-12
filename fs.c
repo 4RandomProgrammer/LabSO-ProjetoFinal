@@ -51,8 +51,9 @@ typedef struct {
 } dir_entry;
 
 dir_entry dir[DIRENTRIES];
-int formatado = 0;
 
+int formatado = 0;
+char file_status[DIRENTRIES] = {'F'};
 
 /*FUNÇÕES AUXILIARES*/
 
@@ -116,9 +117,25 @@ int write_dir(){
 //
 
 int create_file(char* file_name) {
-	//checagem de nome
+	//Operação apenas possível em disco formatado
+	if(!formatado){
+		printf("Erro: o disco não está pronto para uso. É necessário formatá-lo.\n");
+		return 0;
+	}
+
+	//Checando o tamanho do nome do arquivo
+	if(strlen(file_name) > 24)
+	{
+		printf("Erro: Nome do arquivo deve conter apenas 24 caracteres\n");
+		return 0;
+	}
+	
+	
+	//checagem de nome repetido
+	
 	for(int i = 0; i < DIRENTRIES; i++){
 		if(dir[i].used){
+		
 			if(!strcmp(dir[i].name, file_name)){
 				//nome de arquivo igual causa erro
 				printf("Erro: Já existe um arquivo com esse nome.\n");
@@ -127,18 +144,27 @@ int create_file(char* file_name) {
 		}
 	}
 
+	//Nova entrada no dir
   	dir_entry new;
   	new.used = 1;
   	strcpy(new.name, file_name);
   	new.first_block = find_first_empty_fat_index(0);
-  	new.size = 0;
-  	int file_index = find_first_empty_dir();
-  	dir[file_index] = new;
+  	new.size = 0; 
+
+	//Checagem se é possível adicionar mais arquivos 
+	int new_dir_index = find_first_empty_dir();
+	if(new_dir_index == -1)
+	{
+		printf("Erro: Não é possível criar mais arquivos\n");
+		return 0;
+	}
+
+  	dir[new_dir_index] = new;
 
 	fat[new.first_block] = 2;
 
 	if(write_fat() && write_dir()){
-		return file_index;
+		return new_dir_index;
 	}else{
 		return 0;
 	}
@@ -233,7 +259,13 @@ int fs_free() {
 	for (int i = 0 ; i < DIRENTRIES ; i++) {
 
 		if(dir[i].used){
-			max_size = max_size - dir[i].size; 
+			int actual_size = dir[i].size / SECTORSIZE; //divisao inteira do tamanho pelo setor
+			
+			//se a divisao nao for inteira ou o tamanho do arquivo for nulo, o arquivo ocupa um setor a mais.
+			if( (dir[i].size % SECTORSIZE) or actual_size == 0) actual_size++;
+			
+			max_size = max_size - actual_size;
+		 
 		}
 	}
   //printf("Função não implementada: fs_free\n");
@@ -382,9 +414,9 @@ int fs_remove(char *file_name) {
 // ------------ PARTE 2 -------------//
 
 int fs_open(char *file_name, int mode) {
-  int file_index = -1;
-  // Encontrar arquivo
-  for (int i = 0 ; i < DIRENTRIES ; i++) {   
+	int file_index = -1;
+  	// Encontrar arquivo
+  	for (int i = 0 ; i < DIRENTRIES ; i++) {   
     	if(dir[i].used == 0)
     	  continue;
     	  
@@ -392,23 +424,25 @@ int fs_open(char *file_name, int mode) {
     	  file_index = i;
     	  break;
     	}
-  } 
+  	} 
 
-  // Modo de leitura
-  if (mode == FS_R) {
-    if (file_index == -1) {
-      printf("ERRO: Arquivo não existe!\n");
-      return -1;
-    }
+  	// Modo de leitura
+  	if (mode == FS_R) {
+    	if (file_index == -1) {
+      		printf("ERRO: Arquivo não existe!\n");
+      		return -1;
+    	}
+		file_status[file_index] = 'R';
     
-  // Modo de escrita
-  } else {
-    if (file_index != -1) {
-      fs_remove(file_name);
-    }
-    file_index = create_file(file_name);
-    if (file_index == 0)
-      return -1;
+  	// Modo de escrita
+  	} else {
+    	if (file_index != -1) {
+      		fs_remove(file_name);
+    	}
+    	file_index = create_file(file_name);
+    	if (file_index == 0)
+      		return -1;
+		file_status[file_index] = 'W';
   }
   
   return file_index;
