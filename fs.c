@@ -166,13 +166,15 @@ int fs_init() {
 
 
 	// Checar se ta formatado
-	for (int i = 0; i < fat_count; i++) {	// Checar se os arquivos estão certinhos
+	for (int i = 0; i < fat_count; i++) {	
+		// Checar se os arquivos estão com índices corretos
 	        if (fat[i] != 3) {
     	        printf("Erro: o disco não está pronto para uso. É necessário formatá-lo.\n");
     	        return 1;
     	    }
   	}
 
+	//Checando índice do diretório
   	if (fat[fat_count] != 4) {
   	    printf("Erro: o disco não está pronto para uso. É necessário formatá-lo.\n");
   	    return 1;
@@ -187,6 +189,7 @@ escrevendo as estruturas de dados necessárias */
 //Basicamente remove todas as entradas no diretório e reseta a FAT
 int fs_format() {
 
+	//Limpando todo o vetor de Dir
 	for (int i = 0; i < DIRENTRIES; i++){
     	//strcpy(dir[i].name, NULL);
 		dir[i].first_block = 0;
@@ -199,8 +202,10 @@ int fs_format() {
     	fat[i] = 3;
 	}
 
+	//índice do diretório
 	fat[32] = 4;
 
+	//índices mostrando que o setor está livre 
 	for (int i = 33; i < FATCLUSTERS; i++){
     	fat[i] = 1;
 	}
@@ -224,6 +229,7 @@ int fs_free() {
 	//Como não podem ser usados para escrever arquivos, subtraímos 
 	int max_size = (bl_size() - 33) * SECTORSIZE ;
 
+	//Somando o valor em bytes de todos os arquivos do sistema e subtraindo do total máximo
 	for (int i = 0 ; i < DIRENTRIES ; i++) {
 
 		if(dir[i].used){
@@ -240,9 +246,17 @@ int fs_free() {
 int fs_list(char *buffer, int size) {
 	//printf("Função não implementada: fs_list\n");
 	//buffer = NULL;
+	
+	//Operação apenas possível em disco formatado
+	if(!formatado){
+		printf("Erro: o disco não está pronto para uso. É necessário formatá-lo.\n");
+		return 0;
+	}
+
 	buffer[0]='\0';
 	char temp_buffer[150];
 	
+	//Escrevendo as informações da listagem no buffer
   	for (int i = 0 ; i < DIRENTRIES ; i++) {
     
     	if(dir[i].used == 1) 
@@ -260,7 +274,22 @@ int fs_list(char *buffer, int size) {
 //Cria um novo arquivo com nome file_name e tamanho 0. 
 //Um erro deve ser gerado se o arquivo já existe.
 int fs_create(char* file_name) {
-	//checagem de nome
+	
+	//Operação apenas possível em disco formatado
+	if(!formatado){
+		printf("Erro: o disco não está pronto para uso. É necessário formatá-lo.\n");
+		return 0;
+	}
+
+	//Checando o tamanho do nome do arquivo
+	if(strlen(file_name) > 24)
+	{
+		printf("Erro: Nome do arquivo deve conter apenas 24 caracteres\n");
+		return 0;
+	}
+	
+	
+	//checagem de nome repetido
 	
 	for(int i = 0; i < DIRENTRIES; i++){
 		if(dir[i].used){
@@ -273,15 +302,15 @@ int fs_create(char* file_name) {
 		}
 	}
 
-
+	//Nova entrada no dir
   	dir_entry new;
   	new.used = 1;
   	strcpy(new.name, file_name);
   	new.first_block = find_first_empty_fat_index(0);
   	new.size = 0; 
 
+	//Checagem se é possível adicionar mais arquivos 
 	int new_dir_index = find_first_empty_dir();
-	
 	if(new_dir_index == -1)
 	{
 		printf("Erro: Não é possível criar mais arquivos\n");
@@ -302,31 +331,31 @@ int fs_create(char* file_name) {
 
 int fs_remove(char *file_name) {
 
-	//Pegar os nome dos arquivos da fat; - onde estão o nome dos arquivos?
-	//Ir comparando nome a nome e remover
-	//Como remover? Setar tudo para 0?
-	//Ao remover enviar os agrupamentos livres
-	//como que com a posição na fat eu chego nos arquivos?
+	
+	if(!formatado){
+		printf("Erro: o disco não está pronto para uso. É necessário formatá-lo.\n");
+		return 0;
+	}
 
 	int removed = 0;
 	int i = 0;
 
 	while(i < DIRENTRIES){
 		
-		//Remover
-		if(strcmp(file_name,dir[i].name) == 0){
+		//procurando o arquivo
+		if(strcmp(file_name,dir[i].name) == 0 && dir[i].used){
 
-			//Setando removed para 1 já que ele foi removido
+			//Setando removed para mostrar que houve um arquivo removido
 			removed = 1;
 
-			//Como remover
+			//Arquivo não é mais utilizado
 			dir[i].used = 0;
 
-			//Criar um buffer de 1s com o para ser escrito no disco
+			//Pegando o primeiro bloco indexado
 			int pos = dir[i].first_block;
 			int nextPos = fat[pos];
 
-			//Removido da fat
+			//Removendo o arquivo da fat
 			while(pos != 2){
 
 				fat[pos] = 1;
@@ -334,12 +363,8 @@ int fs_remove(char *file_name) {
 				nextPos = fat[pos];
 			}
 			
-			//Remover o diretório do disco e da fat
-			//char *buffer = (char *) dir;
-			//bl_write(2*FATCLUSTERS/CLUSTERSIZE,buffer);
-
+			write_dir();
 			write_fat();
-			write_dir();			
 
 
 			break;
