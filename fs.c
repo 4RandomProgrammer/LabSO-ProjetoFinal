@@ -51,8 +51,9 @@ typedef struct {
 } dir_entry;
 
 dir_entry dir[DIRENTRIES];
-int formatado = 0;
 
+int formatado = 0;
+char file_status[DIRENTRIES] = {'F'};
 
 /*FUNÇÕES AUXILIARES*/
 
@@ -116,9 +117,25 @@ int write_dir(){
 //
 
 int create_file(char* file_name) {
-	//checagem de nome
+	//Operação apenas possível em disco formatado
+	if(!formatado){
+		printf("Erro: o disco não está pronto para uso. É necessário formatá-lo.\n");
+		return 0;
+	}
+
+	//Checando o tamanho do nome do arquivo
+	if(strlen(file_name) > 24)
+	{
+		printf("Erro: Nome do arquivo deve conter apenas 24 caracteres\n");
+		return 0;
+	}
+	
+	
+	//checagem de nome repetido
+	
 	for(int i = 0; i < DIRENTRIES; i++){
 		if(dir[i].used){
+		
 			if(!strcmp(dir[i].name, file_name)){
 				//nome de arquivo igual causa erro
 				printf("Erro: Já existe um arquivo com esse nome.\n");
@@ -127,18 +144,27 @@ int create_file(char* file_name) {
 		}
 	}
 
+	//Nova entrada no dir
   	dir_entry new;
   	new.used = 1;
   	strcpy(new.name, file_name);
   	new.first_block = find_first_empty_fat_index(0);
-  	new.size = 0;
-  	int file_index = find_first_empty_dir();
-  	dir[file_index] = new;
+  	new.size = 0; 
+
+	//Checagem se é possível adicionar mais arquivos 
+	int new_dir_index = find_first_empty_dir();
+	if(new_dir_index == -1)
+	{
+		printf("Erro: Não é possível criar mais arquivos\n");
+		return 0;
+	}
+
+  	dir[new_dir_index] = new;
 
 	fat[new.first_block] = 2;
 
 	if(write_fat() && write_dir()){
-		return file_index;
+		return new_dir_index;
 	}else{
 		return 0;
 	}
