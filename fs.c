@@ -408,9 +408,9 @@ int fs_remove(char *file_name) {
 // ------------ PARTE 2 -------------//
 
 int fs_open(char *file_name, int mode) {
-  int file_index = -1;
-  // Encontrar arquivo
-  for (int i = 0 ; i < DIRENTRIES ; i++) {   
+	int file_index = -1;
+  	// Encontrar arquivo
+  	for (int i = 0 ; i < DIRENTRIES ; i++) {   
     	if(dir[i].used == 0)
     	  continue;
     	  
@@ -418,23 +418,25 @@ int fs_open(char *file_name, int mode) {
     	  file_index = i;
     	  break;
     	}
-  } 
+  	} 
 
-  // Modo de leitura
-  if (mode == FS_R) {
-    if (file_index == -1) {
-      printf("ERRO: Arquivo não existe!\n");
-      return -1;
-    }
+  	// Modo de leitura
+  	if (mode == FS_R) {
+    	if (file_index == -1) {
+      		printf("ERRO: Arquivo não existe!\n");
+      		return -1;
+    	}
+		file_status[file_index] = 'R';
     
-  // Modo de escrita
-  } else {
-    if (file_index != -1) {
-      fs_remove(file_name);
-    }
-    file_index = create_file(file_name);
-    if (file_index == 0)
-      return -1;
+  	// Modo de escrita
+  	} else {
+    	if (file_index != -1) {
+      		fs_remove(file_name);
+    	}
+    	file_index = create_file(file_name);
+    	if (file_index == 0)
+      		return -1;
+		file_status[file_index] = 'W';
   }
   
   return file_index;
