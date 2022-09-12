@@ -115,6 +115,36 @@ int write_dir(){
 //}
 //
 
+int create_file(char* file_name) {
+	//checagem de nome
+	for(int i = 0; i < DIRENTRIES; i++){
+		if(dir[i].used){
+			if(!strcmp(dir[i].name, file_name)){
+				//nome de arquivo igual causa erro
+				printf("Erro: Já existe um arquivo com esse nome.\n");
+				return 0;
+			}
+		}
+	}
+
+  	dir_entry new;
+  	new.used = 1;
+  	strcpy(new.name, file_name);
+  	new.first_block = find_first_empty_fat_index(0);
+  	new.size = 0;
+  	int file_index = find_first_empty_dir();
+  	dir[file_index] = new;
+
+	fat[new.first_block] = 2;
+
+	if(write_fat() && write_dir()){
+		return file_index;
+	}else{
+		return 0;
+	}
+}
+
+
 // ------------ PARTE 1 -------------//
 
 
@@ -352,8 +382,36 @@ int fs_remove(char *file_name) {
 // ------------ PARTE 2 -------------//
 
 int fs_open(char *file_name, int mode) {
-  printf("Função não implementada: fs_open\n");
-  return -1;
+  int file_index = -1;
+  // Encontrar arquivo
+  for (int i = 0 ; i < DIRENTRIES ; i++) {   
+    	if(dir[i].used == 0)
+    	  continue;
+    	  
+    	if (strcmp(file_name, dir[i].name) == 0) {
+    	  file_index = i;
+    	  break;
+    	}
+  } 
+
+  // Modo de leitura
+  if (mode == FS_R) {
+    if (file_index == -1) {
+      printf("ERRO: Arquivo não existe!\n");
+      return -1;
+    }
+    
+  // Modo de escrita
+  } else {
+    if (file_index != -1) {
+      fs_remove(file_name);
+    }
+    file_index = create_file(file_name);
+    if (file_index == 0)
+      return -1;
+  }
+  
+  return file_index;
 }
 
 int fs_close(int file)  {
