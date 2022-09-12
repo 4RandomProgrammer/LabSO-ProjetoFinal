@@ -233,7 +233,13 @@ int fs_free() {
 	for (int i = 0 ; i < DIRENTRIES ; i++) {
 
 		if(dir[i].used){
-			max_size = max_size - dir[i].size; 
+			int actual_size = dir[i].size / SECTORSIZE; //divisao inteira do tamanho pelo setor
+			
+			//se a divisao nao for inteira ou o tamanho do arquivo for nulo, o arquivo ocupa um setor a mais.
+			if( (dir[i].size % SECTORSIZE) or actual_size == 0) actual_size++;
+			
+			max_size = max_size - actual_size;
+		 
 		}
 	}
   //printf("Função não implementada: fs_free\n");
