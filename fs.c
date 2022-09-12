@@ -420,8 +420,27 @@ int fs_close(int file)  {
 }
 
 int fs_write(char *buffer, int size, int file) {
-  printf("Função não implementada: fs_write\n");
-  return -1;
+	//printf("Função não implementada: fs_write\n");
+
+	int quebrado = (size % SECTORSIZE) != 0 ? 1 : 0;
+
+	int iterations = (size / SECTORSIZE) + quebrado;
+
+	for (int i = 0; i < iterations; i++) {
+
+		int w_block = find_first_empty_fat_index(0);
+
+		if(i+1 == iterations) fat[w_block] = 2;
+
+
+
+
+		//bl_write(find_first_empty_fat_index(0),);
+
+	}
+
+
+	return -1;
 }
 
 int fs_read(char *buffer, int size, int file) {
