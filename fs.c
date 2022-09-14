@@ -481,7 +481,54 @@ int fs_write(char *buffer, int size, int file) {
 }
 
 int fs_read(char *buffer, int size, int file) {
-  printf("Função não implementada: fs_read\n");
-  return -1;
+    // printf("Função não implementada: fs_read\n");
+  // return -1;
+  //caso o arquivo n esteja senod usando
+  int bytes_lidos = 0;
+  
+  if(!formatado){
+	printf("Erro: o disco não está pronto para uso. É necessário formatá-lo.\n");
+	return 0;
+}
+  
+  if(!dir[file].used) {
+    printf("Arquivo informado não esta sendo utilizado");
+    return -1;
+  }
+
+  if(file_status[file] == 'W') {
+    printf("Arquivo nao esta no modo de leitura.");
+    return -1;
+  }
+
+  char buffTest[4097];
+
+  //Pegando o primeiro bloco indexado
+  int pos = dir[file].first_block;
+  int nextPos = fat[pos];
+
+  
+  for(int i = 0; i < size; i += 4096){
+
+    if(pos == 2) {
+      break; 
+    }
+
+    bl_read(pos, buffTest);
+    pos = nextPos;
+    nextPos = fat[pos];
+
+    sprintf(buffer + bytes_lidos,"%s", buffTest);
+
+    if(size - i >= 0){
+      bytes_lidos += 4096;
+    }
+    else{
+      bytes_lidos += size;
+    }
+    
+  }
+    
+  return bytes_lidos;
 }
 
