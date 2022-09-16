@@ -463,21 +463,34 @@ int fs_write(char *buffer, int size, int file) {
 
 	int w_block = dir[file].first_block;
 
+
+	int lastRide = 0;
+	int total=0;
 	for (int i = 0; i < iterations; i++) {
 
 
-		if(i+1 == iterations) fat[w_block] = 2;
+		if(i+1 == iterations) 
+		{
+			fat[w_block] = 2;
+			lastRide = 1;
+		}
 
-		w_block = find_first_empty_fat_index(0);
 
+		if(!lastRide) 
+		{
+			int new_block = find_first_empty_fat_index(0);
+			fat[w_block] = new_block;
+			w_block = new_block;
+		}
 
+		total += bl_write(w_block, &buffer[i*SECTORSIZE]);
 
 		//bl_write(find_first_empty_fat_index(0),);
 
 	}
 
 
-	return -1;
+	return total;
 }
 
 int fs_read(char *buffer, int size, int file) {
