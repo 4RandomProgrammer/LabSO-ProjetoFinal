@@ -52,6 +52,9 @@ dir_entry dir[DIRENTRIES];
 
 int formatado = 0;
 char file_status[DIRENTRIES] = {'F'};
+char writeBuff[SECTORSIZE*10];
+
+int FatDirSize = 32+1;
 
 /*FUNÇÕES AUXILIARES*/
 
@@ -72,10 +75,10 @@ int find_first_empty_fat_index(int last_seen_index)
 { 
 
   	//Acha o primeiro bloco livre indicado por 1
-  	for (int i = last_seen_index; i < FATCLUSTERS; i++)
+  	for (int i = 0; i < FATCLUSTERS; i++)
   	{
       	//TODO
-      	if(fat[i] == 1) return i;
+      	if(fat[i] == 1 && i != last_seen_index) return i;
   	}
 
   	return -1;
@@ -261,7 +264,7 @@ int fs_free() {
 			//se a divisao nao for inteira ou o tamanho do arquivo for nulo, o arquivo ocupa um setor a mais.
 			if( (dir[i].size % SECTORSIZE) || actual_size == 0) actual_size++;
 			
-			max_size = max_size - actual_size;
+			max_size = max_size - (actual_size * SECTORSIZE);
 		 
 		}
 	}
@@ -468,6 +471,9 @@ int fs_close(int file)  {
 	//se o arquivo existe no diretório e foi aberto, ele é marcado como fechado
 	file_status[file] = 'F';	
   	//printf("Função não implementada: fs_close\n");
+
+	//Ultima chamada para terminar de printar 
+	fs_write(NULL,-1,file);
 	return 1;
 }
 
@@ -476,15 +482,23 @@ int fs_close(int file)  {
 int fs_write(char *buffer, int size, int file) {
 	//printf("Função não implementada: fs_write\n");
 
-	int quebrado = (size % SECTORSIZE) != 0 ? 1 : 0;
+	if(size >= 0)
+	{
+		strcat(writeBuff,buffer);
+		return size;
+	}
 
-	int iterations = (size / SECTORSIZE) + quebrado;
+	int writeBuffSize = strlen(writeBuff);
+	writeBuff[writeBuffSize] = '\0';
+
+	int quebrado = (writeBuffSize % SECTORSIZE) != 0 ? 1 : 0;
+
+	int iterations = (writeBuffSize / SECTORSIZE) + quebrado;
 
 	int w_block = dir[file].first_block;
 
 
 	int lastRide = 0;
-	int total=0;
 	for (int i = 0; i < iterations; i++) {
 
 
@@ -495,21 +509,30 @@ int fs_write(char *buffer, int size, int file) {
 		}
 
 
+		int new_block = find_first_empty_fat_index(w_block);
+
 		if(!lastRide) 
 		{
-			int new_block = find_first_empty_fat_index(0);
-			fat[w_block] = new_block;
-			w_block = new_block;
+			fat[w_block] = new_block ;
 		}
 
-		total += bl_write(w_block, &buffer[i*SECTORSIZE]);
 
+		bl_write(w_block, &writeBuff[i*SECTORSIZE]);
+		w_block = new_block;
+	}
 		//bl_write(find_first_empty_fat_index(0),);
 
+	
+	dir[file].size += writeBuffSize;
+
+	if(write_fat() && write_dir()){
+		return 1;
+	}else{
+		return 0;
 	}
+	
 
-
-	return total;
+	
 }
 
 
