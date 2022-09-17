@@ -22,9 +22,7 @@
 
 /*
 bl_write escreve SECTORZISE bytes
-
 4kiB = 1 setor = 4096 bytes
-
 Setores
 FAT -> 32 setores [0-31]
 DIR -> 1 setor [32]
@@ -248,7 +246,6 @@ int fs_format() {
 
 
 //Retorna o espaço livre no dispositivo em bytes
-//TODO: conferir se está certo
 int fs_free() {
 
 	//33 = 32 setores da FAT + 1 setor do Dir
@@ -412,7 +409,9 @@ int fs_remove(char *file_name) {
 	return removed;
 }
 
+
 // ------------ PARTE 2 -------------//
+
 
 int fs_open(char *file_name, int mode) {
 	int file_index = -1;
@@ -430,7 +429,7 @@ int fs_open(char *file_name, int mode) {
   	// Modo de leitura
   	if (mode == FS_R) {
     	if (file_index == -1) {
-      		printf("ERRO: Arquivo não existe!\n");
+      		printf("Erro: Arquivo não existe!\n");
       		return -1;
     	}
 		file_status[file_index] = 'R';
@@ -440,19 +439,39 @@ int fs_open(char *file_name, int mode) {
     	if (file_index != -1) {
       		fs_remove(file_name);
     	}
-    	file_index = create_file(file_name);
-    	if (file_index == -1)
+    	
+		file_index = create_file(file_name);
+    	
+		if (file_index == -1){
       		return -1;
+		}
+		
 		file_status[file_index] = 'W';
   }
   
   return file_index;
 }
 
+
 int fs_close(int file)  {
-  printf("Função não implementada: fs_close\n");
-  return 0;
+	//verifica o arquivo no diretorio
+	if(dir[file].used==0){
+		printf("Erro: Arquivo não existe!\n");
+		return 0;
+	}
+	//verificar se o arquivo em questao está aberto
+	if(file_status[file]=='F'){
+		printf("Erro: Arquivo não está aberto!\n");
+		return 0;
+	}
+
+	//se o arquivo existe no diretório e foi aberto, ele é marcado como fechado
+	file_status[file] = 'F';	
+  	//printf("Função não implementada: fs_close\n");
+	return 1;
 }
+
+
 
 int fs_write(char *buffer, int size, int file) {
 	//printf("Função não implementada: fs_write\n");
@@ -493,8 +512,63 @@ int fs_write(char *buffer, int size, int file) {
 	return total;
 }
 
+
 int fs_read(char *buffer, int size, int file) {
-  printf("Função não implementada: fs_read\n");
-  return -1;
+  // printf("Função não implementada: fs_read\n");
+  // return -1;
+  // caso o arquivo n esteja senod usando
+  int bytes_lidos = 0;
+
+  if (!formatado) {
+    printf(
+        "Erro: o disco não está pronto para uso. É necessário formatá-lo.\n");
+    return 0;
+  }
+
+  if (!dir[file].used) {
+    printf("Arquivo informado não esta sendo utilizado");
+    return -1;
+  }
+
+  if (file_status[file] == 'W') {
+    printf("Arquivo nao esta no modo de leitura.");
+    return -1;
+  }
+
+  char buffTest[4097];
+
+  // Pegando o primeiro bloco indexado
+  int pos = dir[file].first_block;
+  int nextPos = fat[pos];
+
+  for (int i = 0; i < size; i += 4096) {
+
+    if (pos == 2) {
+      break;
+    }
+
+    bl_read(pos, buffTest);
+    pos = nextPos;
+    nextPos = fat[pos];
+
+    if (!i) {
+      strncpy(buffer, buffTest, size);
+    }
+     
+
+    else {
+      strncat(buffer, buffTest, size - i);
+    }
+    
+
+    if (size - i >= 0) {
+      bytes_lidos += 4096;
+    }
+    else {
+      bytes_lidos += size;
+    }
+  }
+
+  return bytes_lidos;
 }
 
