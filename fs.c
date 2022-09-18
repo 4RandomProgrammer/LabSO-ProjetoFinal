@@ -432,6 +432,12 @@ int fs_remove(char *file_name) {
 
 
 int fs_open(char *file_name, int mode) {
+	//Operação apenas possível em disco formatado
+	if(!formatado){
+		printf("Erro: o disco não está pronto para uso. É necessário formatá-lo.\n");
+		return -1;
+	}
+
 	int file_index = -1;
   	// Encontrar arquivo
   	for (int i = 0 ; i < DIRENTRIES ; i++) {   
@@ -542,8 +548,10 @@ int fs_write(char *buffer, int size, int file) {
 	}
 
 
-	//A chamada fs_close indica que os últimos bytes foram salvos no buffer de escrita mandando o size como -1. Enquanto não for, apenas concatenamos o conteúdo a um buffer de escrita
-	//Essa prática foi escolhida devido a quantidade de bytes mandados pelas funções de copia (apenas 10). Como o acesso a memória segundária é extremamente lento, com esse truque acessamos ele o menor número de vezes 
+	// A chamada fs_close indica que os últimos bytes foram salvos no buffer de escrita mandando o size como -1. 
+	// Enquanto não for, apenas concatenamos o conteúdo a um buffer de escrita
+	// Essa prática foi escolhida devido a quantidade de bytes mandados pelas funções de copia (apenas 10). 
+	// Como o acesso a memória segundária é extremamente lento, com esse truque acessamos ele o menor número de vezes 
 	if(size >= 0)
 	{
 		strcat(writeBuff,buffer);
@@ -553,7 +561,8 @@ int fs_write(char *buffer, int size, int file) {
 	writeBuff[writeBuffSize] = '\0';
 
 
-	//Caso o tamanho não caiba certinho em todos os setores, temos que levar isso em conta. Como não temos a função de teto da math.h, caso o size tenha resto, adicionamos +1 (meio que um teto artificial)
+	//Caso o tamanho não caiba certinho em todos os setores, temos que levar isso em conta. 
+	// Como não temos a função de teto da math.h, caso o size tenha resto, adicionamos +1 (meio que um teto artificial)
 	int quebrado = (writeBuffSize % SECTORSIZE) != 0 ? 1 : 0;
 
 	int iterations = (writeBuffSize / SECTORSIZE) + quebrado;
@@ -571,7 +580,8 @@ int fs_write(char *buffer, int size, int file) {
 			lastRide = 1;
 		}
 
-		//pegando o próximo bloco livre. O parâmetro da função indica para desconsiderar que o bloco atual está livre, se não, a função retornará sempre w_block já que sua posição na fat mudará apenas mais pra frente 
+		//pegando o próximo bloco livre. O parâmetro da função indica para desconsiderar que o bloco atual está livre, se não, 
+		// a função retornará sempre w_block já que sua posição na fat mudará apenas mais pra frente 
 		int new_block = find_first_empty_fat_index(w_block);
 
 		if(!lastRide) 
