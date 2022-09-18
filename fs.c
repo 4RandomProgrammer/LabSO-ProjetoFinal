@@ -52,7 +52,12 @@ dir_entry dir[DIRENTRIES];
 
 int formatado = 0;
 char file_status[DIRENTRIES] = {'F'};
-char writeBuff[SECTORSIZE*10];
+
+
+#define MAXFILE CLUSTERSIZE * 200
+
+//#define MAXFILE 10     
+char writeBuff[MAXFILE];
 
 int FatDirSize = 32+1;
 
@@ -107,6 +112,16 @@ int write_dir(){
 	int fat_count = 2*FATCLUSTERS/CLUSTERSIZE;
 	return bl_write(fat_count, buffer);
 	
+}
+
+void clean_write_buffer(){
+	
+	int size = strlen(writeBuff);
+
+	for (int i = 0; i < size ; i++)
+	{
+		writeBuff[i] = '\0';
+	}
 }
 
 
@@ -469,11 +484,20 @@ int fs_close(int file)  {
 	}
 
 	//Ultima chamada para terminar de printar 
-	fs_write(NULL,-1,file);
+	if(fs_write(NULL,-1,file) == 0)
+	{
+		printf("Erro: arquivo não pode ser criado corretamente");
+		clean_write_buffer();
+		fs_remove(dir[file].name);
+		return 0;
+	}
 
 	//se o arquivo existe no diretório e foi aberto, ele é marcado como fechado
 	file_status[file] = 'F';	
   	//printf("Função não implementada: fs_close\n");
+	
+	clean_write_buffer();
+
 	return 1;
 }
 
@@ -489,23 +513,45 @@ int fs_write(char *buffer, int size, int file) {
 	}
 
 	//Operação apenas possível em arquivo com capacidade de escrita 
-	if(file_status[file]=='F') 
+	if(file_status[file]!='W') 
 	{
 		printf("Erro: Arquivo não possui capacidade de escrita\n");
 		return 0;
 	}
 
+	int writeBuffSize = strlen(writeBuff);
 
-	//A chamada close indica que os últimos bytes foram salvos mandando o size como -1. Enquanto não for, apenas concatenamos o conteúdo a um buffer de escrita
-	//Essa prática foi escolhida devido a quantidade de bytes mandados pelas funções de copia. Como o acesso a memória segundária é extremamente lento, com esse truque acessamos ele o menor número de vezes 
+	//Checando se cabe em disco 
+	if(writeBuffSize + size > fs_free())
+	{
+		printf("Erro: Não há espaço o suficiente em disco\n");
+		clean_write_buffer();
+		
+
+		return 0;
+	}
+
+	//Checando se cabe no buffer de escrita 
+	if(writeBuffSize + size > MAXFILE)
+	{
+		printf("Erro: Tamanho máximo de arquivo excedido\n");
+		clean_write_buffer();
+		
+
+		return 0;
+	}
+
+
+	//A chamada fs_close indica que os últimos bytes foram salvos no buffer de escrita mandando o size como -1. Enquanto não for, apenas concatenamos o conteúdo a um buffer de escrita
+	//Essa prática foi escolhida devido a quantidade de bytes mandados pelas funções de copia (apenas 10). Como o acesso a memória segundária é extremamente lento, com esse truque acessamos ele o menor número de vezes 
 	if(size >= 0)
 	{
 		strcat(writeBuff,buffer);
 		return size;
 	}
 
-	int writeBuffSize = strlen(writeBuff);
 	writeBuff[writeBuffSize] = '\0';
+
 
 	//Caso o tamanho não caiba certinho em todos os setores, temos que levar isso em conta. Como não temos a função de teto da math.h, caso o size tenha resto, adicionamos +1 (meio que um teto artificial)
 	int quebrado = (writeBuffSize % SECTORSIZE) != 0 ? 1 : 0;

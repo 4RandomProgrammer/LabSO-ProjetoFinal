@@ -39,6 +39,37 @@ void copy(char *file1, char *file2);
 void copyf(char *file1, char *file2);
 void copyt(char *file1, char *file2);
 
+
+void explode()
+{
+    for(int i = 0 ; i < 55 ; i++) {
+
+      char str[20];
+      sprintf(str, "%d", i);
+
+      copyf("big",str);
+
+  }
+}
+
+void createFile()
+{
+
+  copyf("big","teste");
+}
+
+void nonSeq()
+{
+
+  format();
+
+
+  copyf("small","primeiro");
+  copyf("small","segundo");
+  fs_remove("primeiro");
+  copyf("big","terceiro");
+}
+
 int main(int argc, char **argv) {
   char *image;
   int size;
@@ -69,6 +100,17 @@ int main(int argc, char **argv) {
   if (!fs_init()) {
     exit(0);
   }
+
+
+  format();
+
+  
+  //explode();
+  //createFile();
+  //nonSeq();
+
+  //list();
+
 
   while (1) {
     printf("> ");
