@@ -468,12 +468,12 @@ int fs_close(int file)  {
 		return 0;
 	}
 
+	//Ultima chamada para terminar de printar 
+	fs_write(NULL,-1,file);
+
 	//se o arquivo existe no diretório e foi aberto, ele é marcado como fechado
 	file_status[file] = 'F';	
   	//printf("Função não implementada: fs_close\n");
-
-	//Ultima chamada para terminar de printar 
-	fs_write(NULL,-1,file);
 	return 1;
 }
 
@@ -481,7 +481,23 @@ int fs_close(int file)  {
 
 int fs_write(char *buffer, int size, int file) {
 	//printf("Função não implementada: fs_write\n");
+		
+	//Operação apenas possível em disco formatado
+	if(!formatado){
+		printf("Erro: o disco não está pronto para uso. É necessário formatá-lo.\n");
+		return 0;
+	}
 
+	//Operação apenas possível em arquivo com capacidade de escrita 
+	if(file_status[file]=='F') 
+	{
+		printf("Erro: Arquivo não possui capacidade de escrita\n");
+		return 0;
+	}
+
+
+	//A chamada close indica que os últimos bytes foram salvos mandando o size como -1. Enquanto não for, apenas concatenamos o conteúdo a um buffer de escrita
+	//Essa prática foi escolhida devido a quantidade de bytes mandados pelas funções de copia. Como o acesso a memória segundária é extremamente lento, com esse truque acessamos ele o menor número de vezes 
 	if(size >= 0)
 	{
 		strcat(writeBuff,buffer);
@@ -491,28 +507,30 @@ int fs_write(char *buffer, int size, int file) {
 	int writeBuffSize = strlen(writeBuff);
 	writeBuff[writeBuffSize] = '\0';
 
+	//Caso o tamanho não caiba certinho em todos os setores, temos que levar isso em conta. Como não temos a função de teto da math.h, caso o size tenha resto, adicionamos +1 (meio que um teto artificial)
 	int quebrado = (writeBuffSize % SECTORSIZE) != 0 ? 1 : 0;
 
 	int iterations = (writeBuffSize / SECTORSIZE) + quebrado;
 
 	int w_block = dir[file].first_block;
 
-
+	//Flag indicando última iteração 
 	int lastRide = 0;
 	for (int i = 0; i < iterations; i++) {
 
-
+		//Se for a última iteração temos que setar a fat com 2
 		if(i+1 == iterations) 
 		{
 			fat[w_block] = 2;
 			lastRide = 1;
 		}
 
-
+		//pegando o próximo bloco livre. O parâmetro da função indica para desconsiderar que o bloco atual está livre, se não, a função retornará sempre w_block já que sua posição na fat mudará apenas mais pra frente 
 		int new_block = find_first_empty_fat_index(w_block);
 
 		if(!lastRide) 
 		{
+			//Atualizando apontador pro próximo setor com informações
 			fat[w_block] = new_block ;
 		}
 
@@ -522,9 +540,11 @@ int fs_write(char *buffer, int size, int file) {
 	}
 		//bl_write(find_first_empty_fat_index(0),);
 
-	
+
+	//Ajustando o tamanho do arquivo
 	dir[file].size += writeBuffSize;
 
+	//Escrevendo as modificações
 	if(write_fat() && write_dir()){
 		return 1;
 	}else{
