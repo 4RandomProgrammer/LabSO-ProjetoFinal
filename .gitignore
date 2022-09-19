@@ -6,4 +6,5 @@ fs.o
 arq*
 img*
 *.json
+.vscode
 grande

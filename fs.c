@@ -59,6 +59,16 @@ char file_status[DIRENTRIES] = {'F'};
 //#define MAXFILE 10     
 char writeBuff[MAXFILE];
 
+typedef struct{
+  char conteudo[MAXFILE];
+  int file_id;
+  int pos_read;
+  
+} readBuffer;
+
+readBuffer readBuff;
+
+
 int FatDirSize = 32+1;
 
 /*FUNÇÕES AUXILIARES*/
@@ -223,6 +233,7 @@ int fs_init() {
   	}
   	
     formatado = 1;
+	readBuff.file_id = -1;
   	return 1;
 }
 
@@ -490,9 +501,9 @@ int fs_close(int file)  {
 	}
 
 	//Ultima chamada para terminar de printar 
-	if(fs_write(NULL,-1,file) == 0)
+	if(file_status[file] == 'W' && fs_write(NULL,-1,file) == 0)
 	{
-		printf("Erro: arquivo não pode ser criado corretamente");
+		printf("Erro: arquivo não pode ser criado corretamente\n");
 		clean_write_buffer();
 		fs_remove(dir[file].name);
 		return 0;
@@ -620,6 +631,7 @@ int fs_read(char *buffer, int size, int file) {
   // printf("Função não implementada: fs_read\n");
   // return -1;
   // caso o arquivo n esteja senod usando
+  //
   int bytes_lidos = 0;
 
   if (!formatado) {
@@ -633,45 +645,52 @@ int fs_read(char *buffer, int size, int file) {
     return -1;
   }
 
-  if (file_status[file] == 'W') {
+  if (file_status[file] != 'R') {
     printf("Arquivo nao esta no modo de leitura.");
     return -1;
   }
 
-  char buffTest[4097];
-
-  // Pegando o primeiro bloco indexado
-  int pos = dir[file].first_block;
-  int nextPos = fat[pos];
-
-  for (int i = 0; i < size; i += 4096) {
-
-    if (pos == 2) {
-      break;
-    }
-
-    bl_read(pos, buffTest);
-    pos = nextPos;
-    nextPos = fat[pos];
-
-    if (!i) {
-      strncpy(buffer, buffTest, size);
-    }
-     
-
-    else {
-      strncat(buffer, buffTest, size - i);
-    }
+  //Para a primeira chamada configurando todo o arquivo a ser lido;
+  if(readBuff.file_id != file) {
+    readBuff.file_id = file;
+    readBuff.pos_read = 0;
+      
+    //Aq lê o arq completo
+    //Pegando o primeiro bloco indexado
+    int pos = dir[file].first_block;
+    int nextPos = fat[pos];
+  
+    //Lendo o arquivo completamente para a fat
+	readBuff.conteudo[0] = '\0';
+    for(int i = 0; pos != 2; i++){
+      bl_read(pos, &readBuff.conteudo[i * SECTORSIZE]);
+	  puts(readBuff.conteudo);
+      
+      pos = nextPos;
+      nextPos = fat[pos];
     
-
-    if (size - i >= 0) {
-      bytes_lidos += 4096;
-    }
-    else {
-      bytes_lidos += size;
     }
   }
+  
+  
+  //passando o arquivo de size em size
+  if (dir[readBuff.file_id].size > readBuff.pos_read) {
 
-  return bytes_lidos;
+    int bytes_para_ler = size;
+    if(dir[readBuff.file_id].size < readBuff.pos_read + size) {
+        bytes_para_ler = dir[readBuff.file_id].size - readBuff.pos_read;
+    }
+    
+    strncpy(buffer, &readBuff.conteudo[readBuff.pos_read], bytes_para_ler);
+    bytes_lidos = bytes_para_ler;
+    readBuff.pos_read += bytes_para_ler;
+    return bytes_lidos;
+
+  }
+  else {
+
+    return 0;
+
+  }
 }
 
