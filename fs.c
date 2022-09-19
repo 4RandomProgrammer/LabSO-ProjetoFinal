@@ -554,7 +554,8 @@ int fs_write(char *buffer, int size, int file) {
 	// Como o acesso a memória segundária é extremamente lento, com esse truque acessamos ele o menor número de vezes 
 	if(size >= 0)
 	{
-		strcat(writeBuff,buffer);
+		strncat(writeBuff,buffer,size);
+		//puts(writeBuff);
 		return size;
 	}
 
@@ -580,6 +581,8 @@ int fs_write(char *buffer, int size, int file) {
 			lastRide = 1;
 		}
 
+		
+
 		//pegando o próximo bloco livre. O parâmetro da função indica para desconsiderar que o bloco atual está livre, se não, 
 		// a função retornará sempre w_block já que sua posição na fat mudará apenas mais pra frente 
 		int new_block = find_first_empty_fat_index(w_block);
@@ -588,6 +591,7 @@ int fs_write(char *buffer, int size, int file) {
 		{
 			//Atualizando apontador pro próximo setor com informações
 			fat[w_block] = new_block ;
+			
 		}
 
 
