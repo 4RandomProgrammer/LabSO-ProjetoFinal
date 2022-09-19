@@ -70,6 +70,17 @@ void nonSeq()
   copyf("big","terceiro");
 }
 
+
+void readAndWrite()
+{
+
+  format();
+
+
+  copyf("textoin.txt","texto");
+  copyt("texto","textoout.txt");
+}
+
 int main(int argc, char **argv) {
   char *image;
   int size;
@@ -105,11 +116,13 @@ int main(int argc, char **argv) {
   format();
 
   
-  //explode();
-  //createFile();
-  //nonSeq();
+  explode();
+  createFile();
+  nonSeq();
+  createFile();
+  readAndWrite();
 
-  //list();
+  list();
 
 
   while (1) {
