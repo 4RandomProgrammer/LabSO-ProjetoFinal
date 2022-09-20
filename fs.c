@@ -686,7 +686,7 @@ int fs_read(char *buffer, int size, int file) {
     return bytes_lidos;
 
   } else {
-
+    readBuff.pos_read = 0;
     return 0;
   }
 }
