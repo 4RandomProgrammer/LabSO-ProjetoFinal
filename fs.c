@@ -513,7 +513,7 @@ int fs_close(int file)  {
 	file_status[file] = 'F';	
   	//printf("Função não implementada: fs_close\n");
 	
-	clean_write_buffer();
+	//clean_write_buffer();
 
 	return 1;
 }
