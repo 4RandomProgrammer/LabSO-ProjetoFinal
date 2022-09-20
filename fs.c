@@ -628,7 +628,7 @@ int fs_write(char *buffer, int size, int file) {
 
 
 int fs_read(char *buffer, int size, int file) {
-  // printf("Função não implementada: fs_read\n");
+    // printf("Função não implementada: fs_read\n");
   // return -1;
   // caso o arquivo n esteja senod usando
   //
@@ -650,47 +650,45 @@ int fs_read(char *buffer, int size, int file) {
     return -1;
   }
 
-  //Para a primeira chamada configurando todo o arquivo a ser lido;
-  if(readBuff.file_id != file) {
+  // Para a primeira chamada configurando todo o arquivo a ser lido;
+  if (readBuff.file_id != file) {
     readBuff.file_id = file;
     readBuff.pos_read = 0;
-      
-    //Aq lê o arq completo
-    //Pegando o primeiro bloco indexado
+
+    // Aq lê o arq completo
+    // Pegando o primeiro bloco indexado
     int pos = dir[file].first_block;
     int nextPos = fat[pos];
-  
-    //Lendo o arquivo completamente para a fat
-	readBuff.conteudo[0] = '\0';
-    for(int i = 0; pos != 2; i++){
+
+    // Lendo o arquivo completamente para a fat
+    readBuff.conteudo[0] = '\0';
+    for (int i = 0; pos != 2; i++) {
       bl_read(pos, &readBuff.conteudo[i * SECTORSIZE]);
-	  puts(readBuff.conteudo);
-      
+
       pos = nextPos;
       nextPos = fat[pos];
-    
     }
+
+    
   }
-  
-  
-  //passando o arquivo de size em size
+
+  // passando o arquivo de size em size
   if (dir[readBuff.file_id].size > readBuff.pos_read) {
 
     int bytes_para_ler = size;
-    if(dir[readBuff.file_id].size < readBuff.pos_read + size) {
-        bytes_para_ler = dir[readBuff.file_id].size - readBuff.pos_read;
+    if (dir[readBuff.file_id].size < readBuff.pos_read + size) {
+      bytes_para_ler = dir[readBuff.file_id].size - readBuff.pos_read;
     }
-    
+
     strncpy(buffer, &readBuff.conteudo[readBuff.pos_read], bytes_para_ler);
     bytes_lidos = bytes_para_ler;
     readBuff.pos_read += bytes_para_ler;
     return bytes_lidos;
 
-  }
-  else {
-
+  } else {
+    readBuff.file_id = -1;
+    printf("nice\n");
     return 0;
-
   }
 }
 
