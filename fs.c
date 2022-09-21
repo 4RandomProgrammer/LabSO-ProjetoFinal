@@ -233,8 +233,7 @@ int fs_init() {
   	}
   	
     formatado = 1;
-	readBuff.file_id = -1;
-  	return 1;
+	return 1;
 }
 
 /* Inicia o dispositivo de disco para uso, iniciando e 
@@ -409,6 +408,7 @@ int fs_remove(char *file_name) {
 
 			//Arquivo não é mais utilizado
 			dir[i].used = 0;
+			dir[i].size = 0;
 
 			//Pegando o primeiro bloco indexado
 			int pos = dir[i].first_block;
@@ -468,6 +468,7 @@ int fs_open(char *file_name, int mode) {
       		return -1;
     	}
 		file_status[file_index] = 'R';
+		readBuff.file_id = -1;
     
   	// Modo de escrita
   	} else {
@@ -513,7 +514,7 @@ int fs_close(int file)  {
 	file_status[file] = 'F';	
   	//printf("Função não implementada: fs_close\n");
 	
-	//clean_write_buffer();
+//	clean_write_buffer();
 
 	return 1;
 }
@@ -615,6 +616,8 @@ int fs_write(char *buffer, int size, int file) {
 	//Ajustando o tamanho do arquivo
 	dir[file].size += writeBuffSize;
 
+	clean_write_buffer();
+
 	//Escrevendo as modificações
 	if(write_fat() && write_dir()){
 		return 1;
@@ -651,6 +654,7 @@ int fs_read(char *buffer, int size, int file) {
   }
 
   // Para a primeira chamada configurando todo o arquivo a ser lido;
+ 
   if (readBuff.file_id != file) {
     readBuff.file_id = file;
     readBuff.pos_read = 0;
@@ -669,6 +673,7 @@ int fs_read(char *buffer, int size, int file) {
       nextPos = fat[pos];
     }
 
+	//puts(readBuff.conteudo);
     
   }
 

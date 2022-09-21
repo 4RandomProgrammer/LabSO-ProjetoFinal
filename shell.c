@@ -116,11 +116,12 @@ int main(int argc, char **argv) {
   format();
 
   
-  explode();
+  //explode();
   createFile();
-  nonSeq();
-  createFile();
-  readAndWrite();
+  copyt("teste", "hello");
+  //nonSeq();
+  //createFile();
+  //readAndWrite();
 
   list();
 
